@@ -20,13 +20,15 @@ def gerar_dataframe_amostra(num_rows, sender_pool, receiver_pool, amount_range, 
     receivers = [random.choice(receiver_pool) for _ in range(num_rows)]
     amounts = [random.randint(*amount_range) for _ in range(num_rows)]
     timestamps = pd.date_range(start=date_start, periods=num_rows, freq='D')
+    fraud_label = [random.randint(0, 1) for _ in range(num_rows)]
 
     # Criando o DataFrame
     df = pd.DataFrame({
         'sender': senders,
         'receiver': receivers,
         'amount': amounts,
-        'timestamp': timestamps
+        'timestamp': timestamps,
+        'fraud_label': fraud_label
     })
 
     df = df.loc[df.sender != df.receiver]

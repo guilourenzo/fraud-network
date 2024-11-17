@@ -66,17 +66,17 @@ for node in G.nodes:
     centrality_value = centrality[node]
     clustering_coef = clustering[node]
     transaction_count = len(list(G.edges(node)))
-    features.append([centrality_value, clustering_coef, transaction_count])
+    features.append([node, centrality_value, clustering_coef, transaction_count])
 
 features_df = pd.DataFrame(
-    features, columns=["centrality", "clustering_coef", "transaction_count"]
+    features, columns=["node", "centrality", "clustering_coef", "transaction_count"]
 )
 st.write("Features DF")
 st.dataframe(features_df)
 
 # Step 4: Unsupervised Learning - Clustering for Anomaly Detection
 scaler = StandardScaler()
-scaled_features = scaler.fit_transform(features_df)
+scaled_features = scaler.fit_transform(features_df.drop(columns=["node"]))
 
 clustering = DBSCAN(eps=0.5, min_samples=5).fit(scaled_features)
 features_df["anomaly"] = clustering.labels_
@@ -89,7 +89,7 @@ st.dataframe(features_df["anomaly"].value_counts())
 # Assuming we have labeled data for training
 if "fraud_label" in data.columns:
     labeled_data = data.copy()
-    labeled_data = labeled_data.merge(features_df, left_on="sender", right_index=True)
+    labeled_data = pd.merge(labeled_data, features_df, how='left', left_on='sender', right_on='node')
     X = labeled_data[["centrality", "clustering_coef", "transaction_count"]]
     y = labeled_data["fraud_label"]
 
@@ -106,9 +106,17 @@ if "fraud_label" in data.columns:
     # Interpret the Model Using SHAP
     explainer = shap.TreeExplainer(classifier)
     shap_values = explainer.shap_values(X_test)
+
     st.subheader("SHAP Summary Plot")
+    # Criação explícita de uma figura
+    fig, ax = plt.subplots()
+
+    # Gerar o gráfico do SHAP na figura criada
     shap.summary_plot(shap_values, X_test, plot_type="bar", show=False)
-    st.pyplot(bbox_inches="tight")
+    plt.gcf().set_size_inches(fig.get_size_inches())  # Garantir que o tamanho se ajuste ao da figura criada
+
+    # Renderizar o gráfico no Streamlit
+    st.pyplot(fig, bbox_inches="tight")
 
 # Step 6: Visualization & Analysis
 st.subheader("Transaction Network Visualization")
