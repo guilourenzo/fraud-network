@@ -1,7 +1,8 @@
 import pandas as pd
+import numpy as np
 import random
 
-def gerar_dataframe_amostra(num_rows, sender_pool, receiver_pool, amount_range, date_start):
+def gerar_dataframe_amostra(num_rows):
     """Gera um DataFrame simulando transações.
 
     Args:
@@ -14,13 +15,20 @@ def gerar_dataframe_amostra(num_rows, sender_pool, receiver_pool, amount_range, 
     Returns:
         Um DataFrame Pandas com as colunas 'sender', 'receiver', 'amount' e 'timestamp'.
     """
+    # Exemplo de uso:
+    sender_pool = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    receiver_pool = sender_pool.copy()
+    amount_range = (1000, 50000)
+    start_date, end_date = '2023-01-01', '2023-12-31'
 
     # Gerando dados aleatórios
     senders = [random.choice(sender_pool) for _ in range(num_rows)]
     receivers = [random.choice(receiver_pool) for _ in range(num_rows)]
     amounts = [random.randint(*amount_range) for _ in range(num_rows)]
-    timestamps = pd.date_range(start=date_start, periods=num_rows, freq='D')
-    fraud_label = [random.randint(0, 1) for _ in range(num_rows)]
+    timestamps = pd.to_datetime(np.random.choice(pd.date_range(start=start_date, end=end_date), size=num_rows))
+    fraud_label = np.zeros(num_rows)
+
+    
 
     # Criando o DataFrame
     df = pd.DataFrame({
@@ -31,5 +39,14 @@ def gerar_dataframe_amostra(num_rows, sender_pool, receiver_pool, amount_range, 
         'fraud_label': fraud_label
     })
 
-    df = df.loc[df.sender != df.receiver]
+    for i in range(num_rows):
+        while df.loc[i, 'sender'] == df.loc[i, 'receiver']:
+            df.loc[i, 'receiver'] = random.choice(receivers)
+
+    for _ in range(int(num_rows*0.3)):
+        i = np.random.choice(num_rows)
+        df.loc[i, 'amount'] = random.randint(100, 350)
+        df.loc[i, 'fraud_label'] = 1
+    
     return df
+
